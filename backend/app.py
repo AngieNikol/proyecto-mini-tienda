@@ -4,14 +4,19 @@ import os, time, sqlite3, random
 from datetime import datetime, timedelta
 from threading import Event as ThreadEvent
 
-from flask import Flask, request, jsonify, Response
+from flask import Flask, request, jsonify, Response, render_template
 from flask_cors import CORS
 from werkzeug.exceptions import HTTPException
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH  = os.path.join(BASE_DIR, "tienda.db")
 
-app = Flask(__name__)
+app = Flask(
+    __name__,
+    static_folder="static",       # aquí irán los assets de Vite
+    static_url_path="/static",    # cómo se acceden en la web
+    template_folder="templates"   # aquí va el index.html
+)
 CORS(app)
 ventas_event = ThreadEvent()
 
@@ -54,10 +59,10 @@ with get_conn() as conn:
         );
     """)
 
-@app.get("/")
-def home():
-    return "<h2>API Tienda OK</h2><ul><li>/api/health</li><li>/api/productos</li><li>/api/pedidos (POST)</li><li>/api/ventas-top</li><li>/api/ventas-serie</li><li>/api/seed (POST)</li></ul>"
-
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def index(path):
+    return render_template("index.html")
 @app.get("/api/health")
 def health():
     return {"ok": True}
